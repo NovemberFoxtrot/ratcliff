@@ -15,16 +15,12 @@ func checkerror(err error) {
 	}
 }
 
-func main() {
-	if len(os.Args) < 2 {
-		log.Fatalln("Usage: <source> <target>")
-	}
-
-	sourcefile, err := os.Open(os.Args[1])
+func pixels(source, target string) bool {
+	sourcefile, err := os.Open(source)
 	checkerror(err)
 	defer sourcefile.Close()
 
-	targetfile, err := os.Open(os.Args[2])
+	targetfile, err := os.Open(target)
 	checkerror(err)
 	defer targetfile.Close()
 
@@ -35,7 +31,8 @@ func main() {
 	targetbounds := targetimage.Bounds()
 
 	if (sourcebounds.Min.Y != targetbounds.Min.Y) || (sourcebounds.Min.X != targetbounds.Min.X) || (sourcebounds.Max.Y != targetbounds.Max.Y) || (sourcebounds.Max.X != targetbounds.Max.X) {
-		log.Fatalln("Images are not the same size pixel-wise!")
+		return false
+		// log.Fatalln("Images are not the same size pixel-wise!")
 	}
 
 	for y := sourcebounds.Min.Y; y < sourcebounds.Max.Y; y++ {
@@ -44,10 +41,26 @@ func main() {
 			tr, tg, tb, ta := targetimage.At(x, y).RGBA()
 
 			if (sr != tr) || (sg != tg) || (sb != tb) || (sa != ta) {
-				log.Fatalln("Ah! They are not the same!")
+				return false
+				// log.Fatalln("Ah! They are not the same!", x, y)
 			}
 		}
 	}
 
-	log.Println("Oh, I guess they are the same image.")
+	return true
+}
+
+func main() {
+	if len(os.Args) < 3 {
+		log.Fatal("Usage: filepath filepath filepath...")
+	}
+
+	for i := 1; i < len(os.Args)-1; i++ {
+		for j := i + 1; j < len(os.Args); j++ {
+			samePixels := pixels(os.Args[i], os.Args[j])
+			if samePixels == true {
+				log.Println(os.Args[i], os.Args[j])
+			}
+		}
+	}
 }
